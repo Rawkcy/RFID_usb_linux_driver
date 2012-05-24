@@ -1,0 +1,10 @@
+RFIDIOt-1.0a/
+*.py~
+.*~
+*.cpp~
+*.txt~
+*.pyc
+.*.swp
+.*.swo
+build/
+Valgrind-3.7.0
