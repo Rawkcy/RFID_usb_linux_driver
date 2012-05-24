@@ -47,21 +47,21 @@ CONFIG_CLEAN_FILES =
 SOURCES =
 DIST_SOURCES =
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-ACLOCAL = ${SHELL} /home/rox/Projects/RFID_usb_linux_driver/libusb-0.1.12/missing --run aclocal-1.8
+ACLOCAL = ${SHELL} /home/roxanne/Projects/usb_driver/libusb-0.1.12/missing --run aclocal-1.8
 AMDEP_FALSE = #
 AMDEP_TRUE = 
-AMTAR = ${SHELL} /home/rox/Projects/RFID_usb_linux_driver/libusb-0.1.12/missing --run tar
+AMTAR = ${SHELL} /home/roxanne/Projects/usb_driver/libusb-0.1.12/missing --run tar
 AR = ar
-AUTOCONF = ${SHELL} /home/rox/Projects/RFID_usb_linux_driver/libusb-0.1.12/missing --run autoconf
-AUTOHEADER = ${SHELL} /home/rox/Projects/RFID_usb_linux_driver/libusb-0.1.12/missing --run autoheader
-AUTOMAKE = ${SHELL} /home/rox/Projects/RFID_usb_linux_driver/libusb-0.1.12/missing --run automake-1.8
-AWK = mawk
+AUTOCONF = ${SHELL} /home/roxanne/Projects/usb_driver/libusb-0.1.12/missing --run autoconf
+AUTOHEADER = ${SHELL} /home/roxanne/Projects/usb_driver/libusb-0.1.12/missing --run autoheader
+AUTOMAKE = ${SHELL} /home/roxanne/Projects/usb_driver/libusb-0.1.12/missing --run automake-1.8
+AWK = gawk
 BIGENDIAN = 0
 BSD_API = 0
 BSD_API_FALSE = 
 BSD_API_TRUE = #
-BUILD_DOCS_FALSE = 
-BUILD_DOCS_TRUE = #
+BUILD_DOCS_FALSE = #
+BUILD_DOCS_TRUE = 
 CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS = -g -O2 -g -Wall
@@ -84,7 +84,7 @@ ECHO = echo
 ECHO_C = 
 ECHO_N = -n
 ECHO_T = 
-EGREP = grep -E
+EGREP = /bin/grep -E
 EXEEXT = 
 F77 = 
 FFLAGS = 
@@ -92,7 +92,7 @@ INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = ${SHELL} $(install_sh) -c -s
-JADE = 
+JADE = openjade
 LDFLAGS = 
 LIBOBJS = 
 LIBS = 
@@ -114,7 +114,7 @@ LT_AGE = 4
 LT_CURRENT = 8
 LT_RELEASE = 0.1
 LT_REVISION = 4
-MAKEINFO = ${SHELL} /home/rox/Projects/RFID_usb_linux_driver/libusb-0.1.12/missing --run makeinfo
+MAKEINFO = ${SHELL} /home/roxanne/Projects/usb_driver/libusb-0.1.12/missing --run makeinfo
 OBJEXT = o
 OSLIBS = 
 PACKAGE = libusb
@@ -127,15 +127,15 @@ PATH_SEPARATOR = :
 PKG_CONFIG = /usr/bin/pkg-config
 RANLIB = ranlib
 SET_MAKE = 
-SHELL = /bin/bash
+SHELL = /bin/sh
 STRIP = strip
 VERSION = 0.1.12
-ac_ct_AR = ar
+ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = gcc
 ac_ct_CXX = g++
 ac_ct_F77 = 
-ac_ct_RANLIB = ranlib
-ac_ct_STRIP = strip
+ac_ct_RANLIB = @ac_ct_RANLIB@
+ac_ct_STRIP = @ac_ct_STRIP@
 am__fastdepCC_FALSE = #
 am__fastdepCC_TRUE = 
 am__fastdepCXX_FALSE = #
@@ -157,12 +157,12 @@ host_cpu = x86_64
 host_os = linux-gnu
 host_vendor = unknown
 includedir = ${prefix}/include
-infodir = ${prefix}/info
-install_sh = /home/rox/Projects/RFID_usb_linux_driver/libusb-0.1.12/install-sh
+infodir = ${prefix}/share/info
+install_sh = /home/roxanne/Projects/usb_driver/libusb-0.1.12/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localstatedir = ${prefix}/var
-mandir = ${prefix}/man
+mandir = ${prefix}/share/man
 mkdir_p = mkdir -p -- .
 oldincludedir = /usr/include
 pkgconfigdir = ${exec_prefix}/lib/pkgconfig
@@ -185,10 +185,10 @@ CLEANFILES = manual.dvi manual.aux manual.tex manual.log \
 	manual.ps.gz; rm -rf html
 
 # Generating postscript takes forever on my laptop apparentely
-MANUALS = 
+#MANUALS = 
 
 #MANUALS = manual.ps.gz html/index.html
-#MANUALS = html/index.html
+MANUALS = html/index.html
 all: all-am
 
 .SUFFIXES:
@@ -354,13 +354,13 @@ uninstall-am: uninstall-info-am
 all: $(MANUALS)
 
 manual.ps.gz: $(sgml_files) website.dsl
-	 -t ps -d $(srcdir)/website.dsl\#print $(srcdir)/manual.sgml
+	openjade -t ps -d $(srcdir)/website.dsl\#print $(srcdir)/manual.sgml
 	gzip manual.ps
 
 html/index.html: $(sgml_files) website.dsl
 	rm -rf html
 	mkdir html
-	 -t sgml -d $(srcdir)/website.dsl\#html $(srcdir)/manual.sgml
+	openjade -t sgml -d $(srcdir)/website.dsl\#html $(srcdir)/manual.sgml
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

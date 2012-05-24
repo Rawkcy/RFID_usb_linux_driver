@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+#uses pyusb
 
 import usb
 import sys
@@ -28,7 +29,7 @@ def test_interrupt(handle, msg):
         sys.exit(1)
 
 
-if __name__ == "__main__":		
+if __name__ == "__main__":
     print "********************************"
     print "PyUSB test script"
     print "********************************"
@@ -38,11 +39,11 @@ if __name__ == "__main__":
 
     print "enumeration device test..."
     dev = find_device(busses, 0xc029, 0x1325)
-    if dev is None:		
+    if dev is None:
         print "enumeration test failed..."
         sys.exit(1)
     
-    print "enumeration test ok..."	
+    print "enumeration test ok..."
     
     print "opening device test..."
     handle = dev.open()
@@ -74,7 +75,7 @@ if __name__ == "__main__":
     print "I/O test ok..."
 
     print "reset endpoint test..."
-    handle.resetEndpoint(2)	
+    handle.resetEndpoint(2)
     print "reset endpoint ok..."
 
     print "string test..."
