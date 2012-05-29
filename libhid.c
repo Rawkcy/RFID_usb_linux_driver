@@ -1,82 +1,72 @@
 #include <hid.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h> /* for getopt() */
+
+#define EP_HID_IN 0x81
+#define EP_INTERRUPT_IN 0x81
+#define EP_HID_OUT 0x02
+#define PACKET_LENGTH 3
 
 bool match_serial_number(struct usb_dev_handle* usbdev, void* custom, unsigned int len)
 {
   bool ret;
   char* buffer = (char*)malloc(len);
-  usb_get_string_simple(usbdev, usb_device(usbdev)->descriptor.iSerialNumber,
-      buffer, len);
-  ret = strncmp(buffer, (char*)custom, len) == 0;
-  free(buffer);
-  return ret;
-}
-
-void SendToUSB(int value, HIDInterface* hid) {
-	hid_return ret;
-
-	// parameter 2: 0x01: indicating output endpoint 1
-	char packet[] = { value, 0, 0, 0, 0, 0, 0};
-	//char packet[] = {0 };
-	unsigned int timeout = 1000; // milliseconds
-	ret = hid_interrupt_write(hid, 0x01,  packet, 8, timeout); 
-
-	if (ret == HID_RET_SUCCESS) {
-		printf("SUCCESS calling hid_interrupt_write\n");
-	} else {
-		printf("FAILURE calling hid_interrupt_write\n");
-	}
-}
-
-void SendToUSB2(int value, HIDInterface *hid) {
-	hid_return ret;
-#define PATHLEN  2
-	const int PATH_IN[PATHLEN] = { 0x00010005, 0x00010033 };
-#define SEND_PACKET_LEN 1
-	// fill an example packet:
-	char PACKET[SEND_PACKET_LEN] = { value };
-
-	ret = hid_set_output_report(hid, PATH_IN, PATHLEN, PACKET, SEND_PACKET_LEN);
-	if (ret != HID_RET_SUCCESS) {
-		fprintf(stderr, "hid_set_output_report failed with return code %d\n", ret);
-	}
-	// CGP start of change, 4/3/08
-}
-
-void ReceiveFromUSB(HIDInterface *hid) {
-	int i;
-	hid_return ret;
-	// This is 3 (three) just because the PICDEM firmware is set up right now to send a max of 3 bytes each time
-	int length = 3;
-
-	// parameter 2: 0x01: indicating output endpoint 1
-	char packet[8];
-	//char packet[] = {0 };
-	unsigned int timeout = 2000; // milliseconds 
-
-	ret = hid_interrupt_read(hid, 0x01, packet, length, timeout);
-
-	if (ret == HID_RET_SUCCESS) {
-		printf("SUCCESS calling hid_interrupt_read\n");
-		printf("Data received from USB device: ");
-		for (i=0; i < length; i++) {
-			printf("%d, ", packet[i]);
-		}
-		printf("\n");
-	} else {
-		printf("FAILURE calling hid_interrupt_read\n");
-	}
-}
-
+    usb_get_string_simple(usbdev, usb_device(usbdev)->descriptor.iSerialNumber,
+        buffer, len);
+    ret = strncmp(buffer, (char*)custom, len) == 0;
+    free(buffer);
+    return ret;
+  }
+  
 int main(int argc, char *argv[])
 {
   HIDInterface* hid;
+  int iface_num = 0;
   hid_return ret;
-  int i;
+
+  unsigned short vendor_id  = 0x1325;
+  unsigned short product_id = 0xc029;
+  unsigned char const PATHLEN = 1;
+  unsigned char const SEND_PACKET_LEN = 3;
+  char *vendor, *product;
+
+  int flag;
+
+  /* Parse command-line options.
+   *
+   * Currently, we only accept the "-d" flag, which works like "lsusb", and the
+   * "-i" flag to select the interface (default 0). The syntax is one of the
+   * following:
+   *
+   * $ test_libhid -d 1234:
+   * $ test_libhid -d :5678
+   * $ test_libhid -d 1234:5678
+   *
+   * Product and vendor IDs are assumed to be in hexadecimal.
+   *
+   * TODO: error checking and reporting.
+   */
+  while((flag = getopt(argc, argv, "d:i:")) != -1) {
+    switch (flag) {
+      case 'd':
+           product = optarg;
+           vendor = strsep(&product, ":");
+           if(vendor && *vendor) {
+               vendor_id = strtol(vendor, NULL, 16);
+           }
+           if(product && *product) {
+               product_id = strtol(product, NULL, 16);
+           }
+           break;
+      case 'i':
+           iface_num = atoi(optarg);
+           break;
+    }
+  }
 
   /* How to use a custom matcher function:
-   * 
+   *
    * The third member of the HIDInterfaceMatcher is a function pointer, and
    * the forth member will be passed to it on invocation, together with the
    * USB device handle. The fifth member holds the length of the buffer
@@ -97,8 +87,8 @@ int main(int argc, char *argv[])
    */
 
   // HIDInterfaceMatcher matcher = { 0x0925, 0x1237, NULL, NULL, 0 };
-//HIDInterfaceMatcher matcher = { 0x046d, 0xc00c, NULL, NULL, 0 }; 
-HIDInterfaceMatcher matcher = { 0x04d8, 0x0000, NULL, NULL, 0 };// CUI-- Create USB
+  HIDInterfaceMatcher matcher = { vendor_id, product_id, NULL, NULL, 0 };
+
   /* see include/debug.h for possible values */
   hid_set_debug(HID_DEBUG_ALL);
   hid_set_debug_stream(stderr);
@@ -109,16 +99,20 @@ HIDInterfaceMatcher matcher = { 0x04d8, 0x0000, NULL, NULL, 0 };// CUI-- Create 
   if (ret != HID_RET_SUCCESS) {
     fprintf(stderr, "hid_init failed with return code %d\n", ret);
     return 1;
+  } else {
+    fprintf(stderr, "hid_init success!\n");
   }
 
   hid = hid_new_HIDInterface();
   if (hid == 0) {
     fprintf(stderr, "hid_new_HIDInterface() failed, out of memory?\n");
     return 1;
+  } else {
+    fprintf(stderr, "hid_new_HIDInterface success!\n");
   }
-
+ 
   /* How to detach a device from the kernel HID driver:
-   * 
+   *
    * The hid.o or usbhid.ko kernel modules claim a HID device on insertion,
    * usually. To be able to use it with libhid, you need to blacklist the
    * device (which requires a kernel recompilation), or simply tell libhid to
@@ -134,25 +128,64 @@ HIDInterfaceMatcher matcher = { 0x04d8, 0x0000, NULL, NULL, 0 };// CUI-- Create 
    *   http://cvs.ailab.ch/cgi-bin/viewcvs.cgi/external/libphidgets/hotplug/
    * for an example. Try NOT to work as root!
    */
-
-  ret = hid_force_open(hid, 0, &matcher, 3);
+ 
+  ret = hid_force_open(hid, iface_num, &matcher, 25);
   if (ret != HID_RET_SUCCESS) {
     fprintf(stderr, "hid_force_open failed with return code %d\n", ret);
     return 1;
+  } else {
+    fprintf(stderr, "hid_forcE_open success!\n");
   }
-
+ 
   ret = hid_write_identification(stdout, hid);
   if (ret != HID_RET_SUCCESS) {
     fprintf(stderr, "hid_write_identification failed with return code %d\n", ret);
     return 1;
+  } else {
+    fprintf(stderr, "hid_write_identification success!\n");
   }
-
+ 
   ret = hid_dump_tree(stdout, hid);
   if (ret != HID_RET_SUCCESS) {
     fprintf(stderr, "hid_dump_tree failed with return code %d\n", ret);
     return 1;
+  } else {
+    fprintf(stderr, "hid_dump_tree success!\n");
+  }
+ 
+  /* * * * * * * * COMMUNICATION WITH RFID DEVICE * * * * * * * */
+  //TODO: create a polling loop here
+  //allow user to input the control transfer command
+  //poll for interrupt
+  //allow user to quit by hitting CR
+
+  // control transfer HOST-TO-DEVICE
+  int const PATH_IN[] = { 0xff000001 };
+  char const PACKET[] = { 0xC0, 0x03, 0x12 };
+  
+  ret = hid_set_output_report(hid, PATH_IN, PATHLEN, PACKET, SEND_PACKET_LEN);
+  if (ret != HID_RET_SUCCESS) {
+    fprintf(stderr, "hid_set_output_report failed with return code %d\n", ret);
+  } else {
+    fprintf(stderr, "hid_set_output_report successful!\n");
   }
 
+  // interrupt receive DEVICE-TO-HOST
+  // TODO:PACKET_LENGTH should be variable
+  char reply[PACKET_LENGTH];
+
+  fprintf(stderr, "trying to read from RFID\n");
+  ret = hid_interrupt_read(hid, EP_INTERRUPT_IN, reply, PACKET_LENGTH, 100);
+  if (ret != HID_RET_SUCCESS) {
+    fprintf(stderr, "interrupt read failed with return code %d\n", ret);
+    return 1;
+  } else {
+    fprintf(stderr, "interrupt read successful!\n");
+  }
+  //TODO: Print reply
+
+  /* * * * * * * * COMMUNICATION WITH RFID DEVICE * * * * * * * */
+  
   /* How to write to and read from a device:
    *
    * Writing to a device requires the HID usage path, a buffer, and the length
@@ -194,18 +227,18 @@ HIDInterfaceMatcher matcher = { 0x04d8, 0x0000, NULL, NULL, 0 };// CUI-- Create 
    *                [...]
    *                Item(Local ): Usage, data= [ 0x01 ] 1
    *                [...]
-   *                
+   *
    *                Item(Local ): Usage, data= [ 0x02 ] 2
    *                [...]
-   *                
+   *
    *                Item(Global): Usage Page, data= [ 0xa1 0xff ] 65441
    *                [...]
-   *                
+   *
    *                Item(Local ): Usage, data= [ 0x03 ] 3
    *                [...]
    *                Item(Main  ): Input, data= [ 0x02 ] 2
    *                [...]
-   *                
+   *
    *                Item(Local ): Usage, data= [ 0x04 ] 4
    *                [...]
    *                Item(Main  ): Output, data= [ 0x02 ] 2
@@ -225,7 +258,7 @@ HIDInterfaceMatcher matcher = { 0x04d8, 0x0000, NULL, NULL, 0 };// CUI-- Create 
    *
    * which gives the path the the output usage of the HID. The input usage may
    * be found analogously.
-   * 
+   *
    * Now, to send 6 bytes:
    *
    *   unsigned char const SEND_PACKET_LEN = 6;
@@ -246,78 +279,29 @@ HIDInterfaceMatcher matcher = { 0x04d8, 0x0000, NULL, NULL, 0 };// CUI-- Create 
    *   // now use the RECV_PACKET_LEN bytes starting at *packet.
    */
 
-/*
-	// CGP start of change, 4/3/08
-#define PATHLEN  2
-	const int PATH_IN[PATHLEN] = { 0x00010005, 0x00010033 };
-#define SEND_PACKET_LEN 1
-	// fill an example packet:
-	char PACKET[SEND_PACKET_LEN] = { 10 };
-
-	ret = hid_set_output_report(hid, PATH_IN, PATHLEN, PACKET, SEND_PACKET_LEN);
-	if (ret != HID_RET_SUCCESS) {
-		fprintf(stderr, "hid_set_output_report failed with return code %d\n", ret);
-	}
-	// CGP start of change, 4/3/08
-*/
-
-/*
-	// CGP start of change, 4/3/08
-#define PATHLEN  2
-	
-#define SEND_PACKET_LEN 5
-	// fill an example packet:
-	char const PACKET[SEND_PACKET_LEN] = { 0x0, 0x1, 0x2, 0x3, 0x4 };
-
-	ret = hid_set_output_report(hid, PATH_IN, PATHLEN, PACKET, SEND_PACKET_LEN);
-	if (ret != HID_RET_SUCCESS) {
-		fprintf(stderr, "hid_set_output_report failed with return code %d\n", ret);
-	}
-	// CGP start of change, 4/3/08
-*/
-
-/*
-// check command line arg
-	printf("argc = %d\n", argc);
-	if (argc > 1) printf("argv[1]= %s\n", argv[1]);
-		SendToUSB(0, hid);
-	if ((argc > 1) && (strcmp(argv[1], "start") == 0)) {
-		SendToUSB(42, hid);
-	} else if ((argc > 1) && (strcmp(argv[1], "stop") == 0)) {
-		
-	}
-*/
-
-SendToUSB(42, hid); // start data coming back from USB gadget
-
-
-for (;;) {
-	printf("Press enter to continue ('q' to quit)...");
-	int c = getchar();
-	if (c == 'q') break;
-
-	ReceiveFromUSB(hid); 
-	SendToUSB(42, hid);
-}
-
+ 
   ret = hid_close(hid);
   if (ret != HID_RET_SUCCESS) {
     fprintf(stderr, "hid_close failed with return code %d\n", ret);
     return 1;
+  } else {
+    fprintf(stderr, "hid_close successful!\n");
   }
-
+ 
   hid_delete_HIDInterface(&hid);
-
+ 
   ret = hid_cleanup();
   if (ret != HID_RET_SUCCESS) {
     fprintf(stderr, "hid_cleanup failed with return code %d\n", ret);
     return 1;
+  } else {
+    fprintf(stderr, "hid_cleanup successful!\n");
   }
   
   return 0;
-}
-
-/* COPYRIGHT --
+ }
+ 
+ /* COPYRIGHT --
  *
  * This file is part of libhid, a user-space HID access library.
  * libhid is (c) 2003-2005

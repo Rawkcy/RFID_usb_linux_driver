@@ -25,14 +25,8 @@ CONFIGURATION = 1
 # idVendor and idProduct
 VENDOR_ID = 0x1325
 PRODUCT_ID = 0xC029
-
-dev = usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID)
-=======
-PRODUCT_ID = 0xc029
-
 dev = usb.core.find(idVendor=VENDOR_ID, idProduct=PRODUCT_ID, backend=backend)
 
->>>>>>> ae6d855f6593420626c5cd4ba32fe82e59b7a35f
 # was it found?
 if dev is None:
     raise ValueError('Device not found')
@@ -46,7 +40,7 @@ if dev.is_kernel_driver_active(INTERFACE):
 
 # set the active configuration. With no arguments, the first
 # configuration will be the active one
-dev.set_configuration()
+dev.set_configuration(CONFIGURATION)
 
 # get an endpoint instance
 cfg = dev.get_active_configuration()
