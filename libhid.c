@@ -9,74 +9,126 @@
 #define PATHLEN 1
 
 
+static void printHex(const void *data, int length)
+{
+  const char *byte = data;
+  while (length>0)
+  {
+    length--;
+    printf("%.2x ", *byte);
+    byte++;
+  }
+}
+
 static void RFIDCommunication(hid_return ret, HIDInterface** const hid)
 {
-  void append(char* str, char c)
-  {
-    int len = strlen(str);
-    str[len] = c;
-    str[len+1] = '\0';
-  }
+  //void append(char* str, char c)
+  //{
+  //  int len = strlen(str);
+  //  str[len] = c;
+  //  str[len+1] = '\0';
+  //}
 
   int const PATH_IN[] = { 0xff000001 };
-  unsigned int SEND_PACKET_LEN;
-  unsigned int REPLY_PACKET_LENGTH;
+  unsigned int SEND_PACKET_LEN1 = 3;
+  unsigned int REPLY_PACKET_LENGTH1 = 3;
 
-  printf("\n/* * * * * * * * BEGIN COMMUNICATION WITH RFID DEVICE * * * * * * * */\n");
+  printf("\n/* * * * * * * * BEGIN COMMUNICATION WITH RFID DEVICE * * * * * * * */\n\n");
   
   // Looping the communication channel
-  while (true) {
+  //while (true) {
     //XXX Exiting if user input is not a number
-    printf("\nSize of packet to be sent: ");
-    if (scanf("%d", &SEND_PACKET_LEN) != 1) { return; }
-    printf("Size of expected packet reply: ");
-    if (scanf("%d", &REPLY_PACKET_LENGTH) != 1) { return; }
+    //printf("\nSize of packet to be sent: ");
+    //if (scanf("%d", &SEND_PACKET_LEN) != 1) { return; }
+    //printf("Size of expected packet reply: ");
+    //if (scanf("%d", &REPLY_PACKET_LENGTH) != 1) { return; }
 
-//    char PACKET[] = { 0x31, 0x03, 0x01 };
-    char PACKET[SEND_PACKET_LEN];
-    printf("\nPlease input packet data\n");
-    char input_hex[] = { };
-    int num_of_inputs;
-    num_of_inputs = 0;
-    do {
-      printf("Input %d: ", num_of_inputs+1);
+    char PACKET1[] = { 0xC0, 0x03, 0x12 };
+    //char PACKET[SEND_PACKET_LEN];
+    //printf("\nPlease input packet data\n");
+    //char input_hex[] = { };
+    //int num_of_inputs;
+    //num_of_inputs = 0;
+    //do {
+      //printf("Input %d: ", num_of_inputs+1);
       // TODO:
       // append the user input into PACKET[]
       //
 //      gets(input_hex);
 //      strcpy(PACKET, input_hex);
-      append(PACKET, input_hex);
-      ++num_of_inputs;
-    } while (num_of_inputs < SEND_PACKET_LEN);
+      //append(PACKET, input_hex);
+      //++num_of_inputs;
+    //} while (num_of_inputs < SEND_PACKET_LEN);
     
     // control transfer OUT from HOST-TO-DEVICE
-    ret = hid_set_output_report(*hid, PATH_IN, PATHLEN, PACKET, SEND_PACKET_LEN);
+    ret = hid_set_output_report(*hid, PATH_IN, PATHLEN, PACKET1, SEND_PACKET_LEN1);
     if (ret != HID_RET_SUCCESS) {
       fprintf(stderr, "hid_set_output_report failed with return code %d\n", ret);
     } else {
       printf("\nhid_set_output_report successful!\n");
-      printf("\nsent: %s\n", PACKET);
+      printf("\n----->First sent: %s\n", PACKET1);
     }
 
     // interrupt IN from DEVICE-TO-HOST
-    char reply[REPLY_PACKET_LENGTH];
+    char reply1[REPLY_PACKET_LENGTH1+1];
 
     fprintf(stderr, "trying to read from RFID\n");
-    ret = hid_interrupt_read(*hid, EP_INTERRUPT_IN, reply, REPLY_PACKET_LENGTH, 100);
+    ret = hid_interrupt_read(*hid, EP_INTERRUPT_IN, reply1, REPLY_PACKET_LENGTH1, 100);
     if (ret != HID_RET_SUCCESS) {
       fprintf(stderr, "interrupt read failed with return code %d\n", ret);
     } else {
       //TODO: Print reply
-      char * pch;
+      //char * pch;
       printf("\ninterrupt read successful!\n");
-      fprintf(stderr, "Parsing reply: %s\n", reply);
-      pch = strtok (reply, "\\x");
-      while (pch != NULL) {
-	fprintf(stderr, "%s\n", pch);
-	pch = strtok (NULL, "\\x");
-      }
+      fprintf(stderr, "\n----->First reply: %s\n", reply1);
+      //pch = strtok (reply, "\\x");
+      //while (pch != NULL) {
+      //  fprintf(stderr, "%s\n", pch);
+      //  pch = strtok (NULL, "\\x");
+      //}
     }
-  }
+  //}
+    unsigned int SEND_PACKET_LEN2 = 3;
+    unsigned int REPLY_PACKET_LENGTH2 = 64;
+    char PACKET2[] = { 0x31, 0x03, 0x01 };
+    ret = hid_set_output_report(*hid, PATH_IN, PATHLEN, PACKET2, SEND_PACKET_LEN2);
+    if (ret != HID_RET_SUCCESS) {
+      fprintf(stderr, "hid_set_output_report failed with return code %d\n", ret);
+    } else {
+      printf("\nhid_set_output_report successful!\n");
+      printf("\n----->Second sent: %s\n", PACKET2);
+    }
+    char reply2[REPLY_PACKET_LENGTH2+1];
+    fprintf(stderr, "trying to read from RFID\n");
+    ret = hid_interrupt_read(*hid, EP_INTERRUPT_IN, reply2, REPLY_PACKET_LENGTH2, 100);
+    if (ret != HID_RET_SUCCESS) {
+      fprintf(stderr, "interrupt read failed with return code %d\n", ret);
+    } else {
+      printf("\ninterrupt read successful!\n");
+      fprintf(stderr, "\n----->Second reply: %s\n", reply2);
+    }
+
+    unsigned int SEND_PACKET_LEN3 = 3;
+    unsigned int REPLY_PACKET_LENGTH3 = 64;
+    char PACKET3[] = { 0x31, 0x03, 0x02 };
+    ret = hid_set_output_report(*hid, PATH_IN, PATHLEN, PACKET3, SEND_PACKET_LEN3);
+    if (ret != HID_RET_SUCCESS) {
+      fprintf(stderr, "hid_set_output_report failed with return code %d\n", ret);
+    } else {
+      printf("\nhid_set_output_report successful!\n");
+      printf("\n----->Third sent: \n");
+      printHex(PACKET3, SEND_PACKET_LEN3);
+    }
+    char reply3[REPLY_PACKET_LENGTH3+1];
+    fprintf(stderr, "trying to read from RFID\n");
+    ret = hid_interrupt_read(*hid, EP_INTERRUPT_IN, reply3, REPLY_PACKET_LENGTH3, 100);
+    if (ret != HID_RET_SUCCESS) {
+      fprintf(stderr, "interrupt read failed with return code %d\n", ret);
+    } else {
+      printf("\ninterrupt read successful!\n");
+      fprintf(stderr, "\n----->Third reply: \n", reply3);
+      printHex(reply3, REPLY_PACKET_LENGTH3);
+    }
 }
 
 
