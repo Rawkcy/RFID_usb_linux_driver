@@ -107,10 +107,10 @@ static void RFIDCommunication(hid_return ret, HIDInterface** const hid)
       printHex(reply4, REPLY_PACKET_LENGTH4);
     }
 
-    // TAG READ USER MEMORY OPERATION
+    // TAG READ EPC MEMORY OPERATION
     unsigned int SEND_PACKET_LEN5 = 9;
     unsigned int REPLY_PACKET_LENGTH5 = 64;
-    char PACKET5[] = { 0x37, 0x09, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10 };
+    char PACKET5[] = { 0x37, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04 };
     ret = hid_set_output_report(*hid, PATH_IN, PATHLEN, PACKET5, SEND_PACKET_LEN5);
     if (ret != HID_RET_SUCCESS) {
       fprintf(stderr, "hid_set_output_report failed with return code %d\n", ret);
@@ -126,46 +126,6 @@ static void RFIDCommunication(hid_return ret, HIDInterface** const hid)
       printf("\n\n----->Fifth reply: \n", reply5);
       printHex(reply5, REPLY_PACKET_LENGTH5);
     }
-
-    // WRITE TO USER MEMORY
-    signed int SEND_PACKET_LEN6 = 11;
-    unsigned int REPLY_PACKET_LENGTH6 = 4;
-    char PACKET6[] = { 0x35, 0x0B, 0x03, 0x02, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x10 };
-    ret = hid_set_output_report(*hid, PATH_IN, PATHLEN, PACKET6, SEND_PACKET_LEN6);
-    if (ret != HID_RET_SUCCESS) {
-      fprintf(stderr, "hid_set_output_report failed with return code %d\n", ret);
-    } else {
-      printf("\n\n----->write to user memory: \n");
-      printHex(PACKET6, SEND_PACKET_LEN6);
-    }
-    char reply6[REPLY_PACKET_LENGTH6+1];
-    ret = hid_interrupt_read(*hid, EP_INTERRUPT_IN, reply6, REPLY_PACKET_LENGTH6, 100);
-    if (ret != HID_RET_SUCCESS) {
-      fprintf(stderr, "interrupt read failed with return code %d\n", ret);
-    } else {
-      printf("\n\n----->user memory sent\n", reply6);
-      printHex(reply6, REPLY_PACKET_LENGTH6);
-    }
-
-    // TAG READ USER MEMORY OPERATION
-    //unsigned int SEND_PACKET_LEN7 = 9;
-    //unsigned int REPLY_PACKET_LENGTH7 = 4;
-    //char PACKET7[] = { 0x37, 0x09, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10 };
-    //ret = hid_set_output_report(*hid, PATH_IN, PATHLEN, PACKET7, SEND_PACKET_LEN7);
-    //if (ret != HID_RET_SUCCESS) {
-    //  fprintf(stderr, "hid_set_output_report failed with return code %d\n", ret);
-    //} else {
-    //  printf("\n\n----->Fifth sent: \n");
-    //  printHex(PACKET7, SEND_PACKET_LEN7);
-    //}
-    //char reply7[REPLY_PACKET_LENGTH7+1];
-    //ret = hid_interrupt_read(*hid, EP_INTERRUPT_IN, reply7, REPLY_PACKET_LENGTH7, 100);
-    //if (ret != HID_RET_SUCCESS) {
-    //  fprintf(stderr, "interrupt read failed with return code %d\n", ret);
-    //} else {
-    //  printf("\n\n----->Fifth reply: \n", reply7);
-    //  printHex(reply7, REPLY_PACKET_LENGTH7);
-    //}
 }
 
 

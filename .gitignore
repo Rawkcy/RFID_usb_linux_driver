@@ -5,12 +5,5 @@
 *.pyc
 .*.swp
 .*.swo
+libhid
 build/
-Valgrind-3.7.0
-RFIDIOt-1.0a/
-09-05-2011_1.06/
-09-05-2011_Command_Manual_4.0/
-m4-1.4/
-libpcap-1.2.1/
-bison-2.5/
-flex-2.5.35/

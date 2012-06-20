@@ -23,12 +23,12 @@ static void printHex(const void *data, int length)
 static void RFIDCommunication(hid_return ret, HIDInterface** const hid)
 {
     int const PATH_IN[] = { PATHIN };
-    unsigned int SEND_PACKET_LEN1 = 3;
-    unsigned int REPLY_PACKET_LENGTH1 = 3;
 
     printf("\n/* * * * * * * * BEGIN COMMUNICATION WITH RFID DEVICE * * * * * * * */");
 
-    // SET ANTENNA POWER
+    // SET ANTENNA POWER to 18 dbm
+    unsigned int SEND_PACKET_LEN1 = 3;
+    unsigned int REPLY_PACKET_LENGTH1 = 3;
     char PACKET1[] = { 0xC0, 0x03, 0x12 };
     ret = hid_set_output_report(*hid, PATH_IN, PATHLEN, PACKET1, SEND_PACKET_LEN1);
     if (ret != HID_RET_SUCCESS) {
@@ -50,7 +50,7 @@ static void RFIDCommunication(hid_return ret, HIDInterface** const hid)
     // XXX: returns EPC Data
     unsigned int SEND_PACKET_LEN2 = 3;
     unsigned int REPLY_PACKET_LENGTH2 = 64;
-    char PACKET2[] = { 0x31, 0x03, 0x01 };
+    char PACKET2[] = { 0x43, 0x03, 0x01 };
     ret = hid_set_output_report(*hid, PATH_IN, PATHLEN, PACKET2, SEND_PACKET_LEN2);
     if (ret != HID_RET_SUCCESS) {
       fprintf(stderr, "hid_set_output_report failed with return code %d\n", ret);
@@ -67,30 +67,51 @@ static void RFIDCommunication(hid_return ret, HIDInterface** const hid)
       printHex(reply2, REPLY_PACKET_LENGTH2);
     }
 
-    // NEXT TAG 
-    //unsigned int SEND_PACKET_LEN3 = 3;
-    //unsigned int REPLY_PACKET_LENGTH3 = 64;
-    //char PACKET3[] = { 0x31, 0x03, 0x02 };
-    //ret = hid_set_output_report(*hid, PATH_IN, PATHLEN, PACKET3, SEND_PACKET_LEN3);
-    //if (ret != HID_RET_SUCCESS) {
-    //  fprintf(stderr, "hid_set_output_report failed with return code %d\n", ret);
-    //} else {
-    //  printf("\n\n----->Third sent: \n");
-    //  printHex(PACKET3, SEND_PACKET_LEN3);
-    //}
-    //char reply3[REPLY_PACKET_LENGTH3+1];
-    //ret = hid_interrupt_read(*hid, EP_INTERRUPT_IN, reply3, REPLY_PACKET_LENGTH3, 100);
-    //if (ret != HID_RET_SUCCESS) {
-    //  fprintf(stderr, "interrupt read failed with return code %d\n", ret);
-    //} else {
-    //  printf("\n\n----->Third reply: \n", reply3);
-    //  printHex(reply3, REPLY_PACKET_LENGTH3);
-    //}
+    // SET ANTENNA POWER to 5 dbm
+    unsigned int SEND_PACKET_LEN3 = 3;
+    unsigned int REPLY_PACKET_LENGTH3 = 3;
+    char PACKET3[] = { 0xC0, 0x03, 0x10 };
+    ret = hid_set_output_report(*hid, PATH_IN, PATHLEN, PACKET3, SEND_PACKET_LEN3);
+    if (ret != HID_RET_SUCCESS) {
+      fprintf(stderr, "hid_set_output_report failed with return code %d\n", ret);
+    } else {
+      printf("\n\n----->First sent: \n");
+      printHex(PACKET3, SEND_PACKET_LEN3);
+    }
+    char reply3[REPLY_PACKET_LENGTH3+1];
+    ret = hid_interrupt_read(*hid, EP_INTERRUPT_IN, reply3, REPLY_PACKET_LENGTH3, 100);
+    if (ret != HID_RET_SUCCESS) {
+      fprintf(stderr, "interrupt read failed with return code %d\n", ret);
+    } else {
+      printf("\n\n----->First reply:\n");
+      printHex(reply3, REPLY_PACKET_LENGTH3);
+    }
+
+    // TAG INVENTORY OPERATION
+    // XXX: returns EPC Data
+    unsigned int SEND_PACKET_LEN6 = 3;
+    unsigned int REPLY_PACKET_LENGTH6 = 64;
+    char PACKET6[] = { 0x43, 0x03, 0x01 };
+    ret = hid_set_output_report(*hid, PATH_IN, PATHLEN, PACKET6, SEND_PACKET_LEN6);
+    if (ret != HID_RET_SUCCESS) {
+      fprintf(stderr, "hid_set_output_report failed with return code %d\n", ret);
+    } else {
+      printf("\n\n----->Second sent:\n");
+      printHex(PACKET6, SEND_PACKET_LEN6);
+    }
+    char reply6[REPLY_PACKET_LENGTH6+1];
+    ret = hid_interrupt_read(*hid, EP_INTERRUPT_IN, reply6, REPLY_PACKET_LENGTH6, 100);
+    if (ret != HID_RET_SUCCESS) {
+      fprintf(stderr, "interrupt read failed with return code %d\n", ret);
+    } else {
+      printf("\n\n----->Second reply:\n");
+      printHex(reply6, REPLY_PACKET_LENGTH6);
+    }
 
     // TAG SELECT OPERATION
     unsigned int SEND_PACKET_LEN4 = 15;
     unsigned int REPLY_PACKET_LENGTH4 = 3;
-    char PACKET4[] = { 0x33, 0x0F, 0x0C, 0xCF, 0xFA, 0x04, 0x9C, 0x53, 0xE0, 0xC9, 0x7E, 0x13, 0x77, 0xFB, 0x97 };
+    char PACKET4[] = { 0x33, 0x0F, 0x0C, 0x30, 0x05, 0xFB, 0x63, 0xAC, 0x1F, 0x38, 0x41, 0xEC, 0x88, 0x04, 0x67 };
     ret = hid_set_output_report(*hid, PATH_IN, PATHLEN, PACKET4, SEND_PACKET_LEN4);
     if (ret != HID_RET_SUCCESS) {
       fprintf(stderr, "hid_set_output_report failed with return code %d\n", ret);
@@ -107,10 +128,10 @@ static void RFIDCommunication(hid_return ret, HIDInterface** const hid)
       printHex(reply4, REPLY_PACKET_LENGTH4);
     }
 
-    // TAG READ USER MEMORY OPERATION
+    // TAG READ EPC MEMORY OPERATION
     unsigned int SEND_PACKET_LEN5 = 9;
     unsigned int REPLY_PACKET_LENGTH5 = 64;
-    char PACKET5[] = { 0x37, 0x09, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10 };
+    char PACKET5[] = { 0x37, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04 };
     ret = hid_set_output_report(*hid, PATH_IN, PATHLEN, PACKET5, SEND_PACKET_LEN5);
     if (ret != HID_RET_SUCCESS) {
       fprintf(stderr, "hid_set_output_report failed with return code %d\n", ret);
@@ -126,46 +147,6 @@ static void RFIDCommunication(hid_return ret, HIDInterface** const hid)
       printf("\n\n----->Fifth reply: \n", reply5);
       printHex(reply5, REPLY_PACKET_LENGTH5);
     }
-
-    // WRITE TO USER MEMORY
-    signed int SEND_PACKET_LEN6 = 11;
-    unsigned int REPLY_PACKET_LENGTH6 = 4;
-    char PACKET6[] = { 0x35, 0x0B, 0x03, 0x02, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x10 };
-    ret = hid_set_output_report(*hid, PATH_IN, PATHLEN, PACKET6, SEND_PACKET_LEN6);
-    if (ret != HID_RET_SUCCESS) {
-      fprintf(stderr, "hid_set_output_report failed with return code %d\n", ret);
-    } else {
-      printf("\n\n----->write to user memory: \n");
-      printHex(PACKET6, SEND_PACKET_LEN6);
-    }
-    char reply6[REPLY_PACKET_LENGTH6+1];
-    ret = hid_interrupt_read(*hid, EP_INTERRUPT_IN, reply6, REPLY_PACKET_LENGTH6, 100);
-    if (ret != HID_RET_SUCCESS) {
-      fprintf(stderr, "interrupt read failed with return code %d\n", ret);
-    } else {
-      printf("\n\n----->user memory sent\n", reply6);
-      printHex(reply6, REPLY_PACKET_LENGTH6);
-    }
-
-    // TAG READ USER MEMORY OPERATION
-    //unsigned int SEND_PACKET_LEN7 = 9;
-    //unsigned int REPLY_PACKET_LENGTH7 = 4;
-    //char PACKET7[] = { 0x37, 0x09, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10 };
-    //ret = hid_set_output_report(*hid, PATH_IN, PATHLEN, PACKET7, SEND_PACKET_LEN7);
-    //if (ret != HID_RET_SUCCESS) {
-    //  fprintf(stderr, "hid_set_output_report failed with return code %d\n", ret);
-    //} else {
-    //  printf("\n\n----->Fifth sent: \n");
-    //  printHex(PACKET7, SEND_PACKET_LEN7);
-    //}
-    //char reply7[REPLY_PACKET_LENGTH7+1];
-    //ret = hid_interrupt_read(*hid, EP_INTERRUPT_IN, reply7, REPLY_PACKET_LENGTH7, 100);
-    //if (ret != HID_RET_SUCCESS) {
-    //  fprintf(stderr, "interrupt read failed with return code %d\n", ret);
-    //} else {
-    //  printf("\n\n----->Fifth reply: \n", reply7);
-    //  printHex(reply7, REPLY_PACKET_LENGTH7);
-    //}
 }
 
 
